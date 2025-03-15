@@ -8,9 +8,9 @@ run:
 			echo "Starting Prices service..." && \
 			cd prices && go run cmd/main.go \
 			;; \
-		"access") \
-			echo "Starting Access service..." && \
-			cd access && go run cmd/main.go \
+		"auth") \
+			echo "Starting auth service..." && \
+			cd auth && go run cmd/main.go \
 			;; \
 		"gateway") \
 			echo "Starting Gateway service..." && \
@@ -19,11 +19,11 @@ run:
 		"all") \
 			echo "Starting all services..." && \
 			(cd prices && go run cmd/main.go) & \
-			(cd access && go run cmd/main.go) & \
+			(cd auth && go run cmd/main.go) & \
 			(cd gateway && go run cmd/main.go) \
 			;; \
 		*) \
-			echo "Unknown service: $(SERVICE). Available options: prices, access, gateway, all" && \
+			echo "Unknown service: $(SERVICE). Available options: prices, auth, gateway, all" && \
 			exit 1 \
 			;; \
 	esac
@@ -32,7 +32,7 @@ run:
 run-all:
 	@echo "Starting all services..."
 	@(cd prices && go run cmd/main.go) & \
-	(cd access && go run cmd/main.go) & \
+	(cd auth && go run cmd/main.go) & \
 	(cd gateway && go run cmd/main.go)
 
 # Сборка сервисов
@@ -42,9 +42,9 @@ build:
 			echo "Building Prices service..." && \
 			cd prices && mkdir -p bin && go build -o bin/prices cmd/main.go \
 			;; \
-		"access") \
-			echo "Building Access service..." && \
-			cd access && mkdir -p bin && go build -o bin/access cmd/main.go \
+		"auth") \
+			echo "Building auth service..." && \
+			cd auth && mkdir -p bin && go build -o bin/auth cmd/main.go \
 			;; \
 		"gateway") \
 			echo "Building Gateway service..." && \
@@ -53,11 +53,11 @@ build:
 		"all") \
 			echo "Building all services..." && \
 			(cd prices && mkdir -p bin && go build -o bin/prices cmd/main.go) && \
-			(cd access && mkdir -p bin && go build -o bin/access cmd/main.go) && \
+			(cd auth && mkdir -p bin && go build -o bin/auth cmd/main.go) && \
 			(cd gateway && mkdir -p bin && go build -o bin/gateway cmd/main.go) \
 			;; \
 		*) \
-			echo "Unknown service: $(SERVICE). Available options: prices, access, gateway, all" && \
+			echo "Unknown service: $(SERVICE). Available options: prices, auth, gateway, all" && \
 			exit 1 \
 			;; \
 	esac
@@ -66,7 +66,7 @@ build:
 build-all:
 	@echo "Building all services..."
 	@cd prices && mkdir -p bin && go build -o bin/prices cmd/main.go
-	@cd access && mkdir -p bin && go build -o bin/access cmd/main.go
+	@cd auth && mkdir -p bin && go build -o bin/auth cmd/main.go
 	@cd gateway && mkdir -p bin && go build -o bin/gateway cmd/main.go
 	@echo "All services built in their respective bin directories"
 
@@ -77,9 +77,9 @@ start:
 			echo "Starting Prices service..." && \
 			cd prices && ./bin/prices \
 			;; \
-		"access") \
-			echo "Starting Access service..." && \
-			cd access && ./bin/access \
+		"auth") \
+			echo "Starting auth service..." && \
+			cd auth && ./bin/auth \
 			;; \
 		"gateway") \
 			echo "Starting Gateway service..." && \
@@ -88,11 +88,11 @@ start:
 		"all") \
 			echo "Starting all services..." && \
 			(cd prices && ./bin/prices) & \
-			(cd access && ./bin/access) & \
+			(cd auth && ./bin/auth) & \
 			(cd gateway && ./bin/gateway) \
 			;; \
 		*) \
-			echo "Unknown service: $(SERVICE). Available options: prices, access, gateway, all" && \
+			echo "Unknown service: $(SERVICE). Available options: prices, auth, gateway, all" && \
 			exit 1 \
 			;; \
 	esac
@@ -101,7 +101,7 @@ start:
 start-all:
 	@echo "Starting all services from binaries..."
 	@(cd prices && ./bin/prices) & \
-	(cd access && ./bin/access) & \
+	(cd auth && ./bin/auth) & \
 	(cd gateway && ./bin/gateway)
 
 # Генерация proto файлов
@@ -115,31 +115,31 @@ stop:
 	@echo "Stopping all services..."
 	@-pkill -f "go run cmd/main.go" 2>/dev/null || true
 	@-pkill -f "bin/prices" 2>/dev/null || true
-	@-pkill -f "bin/access" 2>/dev/null || true
+	@-pkill -f "bin/auth" 2>/dev/null || true
 	@-pkill -f "bin/gateway" 2>/dev/null || true
 	@echo "All services stopped."
 
 # Очистка бинарных файлов
 clean:
 	@echo "Cleaning binaries..."
-	@rm -rf prices/bin access/bin gateway/bin
+	@rm -rf prices/bin auth/bin gateway/bin
 	@echo "Binaries cleaned."
 
 # Помощь
 help:
 	@echo "Available commands:"
 	@echo "  make run SERVICE=prices      - Run Prices service"
-	@echo "  make run SERVICE=access      - Run Access service"
+	@echo "  make run SERVICE=auth      - Run auth service"
 	@echo "  make run SERVICE=gateway     - Run Gateway service"
 	@echo "  make run SERVICE=all         - Run all services"
 	@echo "  make run-all                 - Run all services (alternative)"
 	@echo "  make build SERVICE=prices    - Build Prices service"
-	@echo "  make build SERVICE=access    - Build Access service"
+	@echo "  make build SERVICE=auth    - Build auth service"
 	@echo "  make build SERVICE=gateway   - Build Gateway service"
 	@echo "  make build SERVICE=all       - Build all services"
 	@echo "  make build-all               - Build all services (alternative)"
 	@echo "  make start SERVICE=prices    - Start Prices binary"
-	@echo "  make start SERVICE=access    - Start Access binary"
+	@echo "  make start SERVICE=auth    - Start auth binary"
 	@echo "  make start SERVICE=gateway   - Start Gateway binary"
 	@echo "  make start SERVICE=all       - Start all binaries"
 	@echo "  make start-all               - Start all binaries (alternative)"
@@ -155,9 +155,9 @@ dev:
 			echo "Starting Prices service with Air..." && \
 			cd prices && air \
 			;; \
-		"access") \
-			echo "Starting Access service with Air..." && \
-			cd access && air \
+		"auth") \
+			echo "Starting auth service with Air..." && \
+			cd auth && air \
 			;; \
 		"gateway") \
 			echo "Starting Gateway service with Air..." && \
@@ -166,11 +166,11 @@ dev:
 		"all") \
 			echo "Starting all services with Air..." && \
 			(cd prices && air) & \
-			(cd access && air) & \
+			(cd auth && air) & \
 			(cd gateway && air) \
 			;; \
 		*) \
-			echo "Unknown service: $(SERVICE). Available options: prices, access, gateway, all" && \
+			echo "Unknown service: $(SERVICE). Available options: prices, auth, gateway, all" && \
 			exit 1 \
 			;; \
 	esac
@@ -179,7 +179,7 @@ dev:
 dev-all:
 	@echo "Starting all services with Air..."
 	@(cd prices && air) & \
-	(cd access && air) & \
+	(cd auth && air) & \
 	(cd gateway && air)
 
 .PHONY: run run-all build build-all start start-all gen stop clean help dev dev-all

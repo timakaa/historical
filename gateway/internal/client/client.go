@@ -30,11 +30,11 @@ func NewClient(address string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) GetHistoricalPrices(exchange, ticker string) ([]*pb.HistoricalPricesResponse, error) {
+func (c *Client) GetPrices(exchange, ticker string) ([]*pb.PricesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	stream, err := c.client.GetHistoricalPrices(ctx, &pb.HistoricalPricesRequest{
+	stream, err := c.client.GetPrices(ctx, &pb.PricesRequest{
 		Exchange: exchange,
 		Ticker:   ticker,
 	})
@@ -42,7 +42,7 @@ func (c *Client) GetHistoricalPrices(exchange, ticker string) ([]*pb.HistoricalP
 		return nil, fmt.Errorf("error getting stream: %v", err)
 	}
 
-	var prices []*pb.HistoricalPricesResponse
+	var prices []*pb.PricesResponse
 	for {
 		price, err := stream.Recv()
 		if err != nil {
@@ -64,4 +64,4 @@ func (c *Client) Health() (*pb.HealthResponse, error) {
 
 func (c *Client) Close() error {
 	return c.conn.Close()
-} 
+}

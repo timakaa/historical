@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/timakaa/historical-gateway/internal/services"
+	"github.com/timakaa/historical-common/proto"
 )
 
 type PricesHandler struct {
-	historicalService services.HistoricalService
+	pricesClient proto.PricesClient
 }
 
-func NewPricesHandler(historicalService services.HistoricalService) *PricesHandler {
+func NewPricesHandler(pricesClient proto.PricesClient) *PricesHandler {
 	return &PricesHandler{
-		historicalService: historicalService,
+		pricesClient: pricesClient,
 	}
 }
 
@@ -22,32 +22,60 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 	exchange := c.Param("exchange")
 	ticker := c.Param("ticker")
 
-	// Get stream from historical service
-	stream, err := h.historicalService.GetHistoricalPrices(c.Request.Context(), exchange, ticker)
+	// Create gRPC request
+	req := &proto.PricesRequest{
+		Exchange: exchange,
+		Ticker:   ticker,
+	}
+
+	// Call gRPC service
+	stream, err := h.pricesClient.GetPrices(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get prices"})
 		return
 	}
 
-	// Set up SSE headers
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
-	c.Header("Transfer-Encoding", "chunked")
+	type Price struct {
+		Open   float64 `json:"open"`
+		High   float64 `json:"high"`
+		Low    float64 `json:"low"`
+		Close  float64 `json:"close"`
+		Volume float64 `json:"volume"`
+	}
 
-	// Stream prices to client
+	// Collect all prices in an array
+	var prices []Price
 	for {
-		price, err := stream.Recv()
+		resp, err := stream.Recv()
 		if err != nil {
 			if err.Error() == "EOF" {
 				break
 			}
 			log.Printf("Error receiving price: %v", err)
-			break
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error receiving prices"})
+			return
 		}
 
-		// Send price as SSE
-		c.SSEvent("price", price)
-		c.Writer.Flush()
+		// Add price to array
+		prices = append(prices, Price{
+			Open:   resp.Open,
+			High:   resp.High,
+			Low:    resp.Low,
+			Close:  resp.Close,
+			Volume: resp.Volume,
+		})
 	}
+
+	// Return all prices as JSON array
+	c.JSON(http.StatusOK, gin.H{"prices": prices})
+}
+
+func (h *PricesHandler) RegisterRoutes(router *gin.RouterGroup, middlewares ...gin.HandlerFunc) {
+	pricesGroup := router.Group("/prices")
+
+	if len(middlewares) > 0 {
+		pricesGroup.Use(middlewares...)
+	}
+
+	pricesGroup.GET("/:exchange/:ticker", h.HandleGetHistoricalPrices)
 }

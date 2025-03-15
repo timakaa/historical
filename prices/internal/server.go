@@ -11,15 +11,15 @@ import (
 )
 
 type Server struct {
-	pb.UnimplementedHistoricalPricesServer
+	pb.UnimplementedPricesServer
 }
 
-func (s *Server) GetHistoricalPrices(req *pb.HistoricalPricesRequest, stream pb.HistoricalPrices_GetHistoricalPricesServer) error {
+func (s *Server) GetHistoricalPrices(req *pb.PricesRequest, stream pb.Prices_GetPricesServer) error {
 	log.Printf("Received request for ticker: %s from exchange: %s", req.GetTicker(), req.GetExchange())
-	
+
 	// TODO: Create a real business logic
 	for i := range [3]int{} {
-		price := &pb.HistoricalPricesResponse{
+		price := &pb.PricesResponse{
 			Date:   fmt.Sprintf("2024-03-%02d", i+1),
 			Open:   100.0 + float64(i),
 			High:   101.0 + float64(i),
@@ -27,12 +27,12 @@ func (s *Server) GetHistoricalPrices(req *pb.HistoricalPricesRequest, stream pb.
 			Close:  100.5 + float64(i),
 			Volume: 1000.0 + float64(i),
 		}
-		
+
 		if err := stream.Send(price); err != nil {
 			return fmt.Errorf("error sending price data: %v", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -43,7 +43,7 @@ func Start(port int) error {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterHistoricalPricesServer(s, &Server{})
+	pb.RegisterPricesServer(s, &Server{})
 
 	log.Printf("Server listening on port %d", port)
 	if err := s.Serve(lis); err != nil {
@@ -51,4 +51,4 @@ func Start(port int) error {
 	}
 
 	return nil
-} 
+}

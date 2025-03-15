@@ -2,18 +2,18 @@ syntax = "proto3";
 
 package prices;
 
-option go_package = "historical/proto";
+option go_package = "github.com/timakaa/historical-common/proto";
 
-service HistoricalPrices {
-  rpc GetHistoricalPrices (HistoricalPricesRequest) returns (stream HistoricalPricesResponse) {}
+service Prices {
+  rpc GetPrices (PricesRequest) returns (stream PricesResponse) {}
 }
 
-message HistoricalPricesRequest {
+message PricesRequest {
   string ticker = 1;
   string exchange = 2;
 }
 
-message HistoricalPricesResponse {
+message PricesResponse {
   string Date = 1;
   double Open = 2;
   double High = 3;

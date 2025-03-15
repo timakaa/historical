@@ -3,16 +3,13 @@ package gateway
 import (
 	"fmt"
 
-	pb "github.com/timakaa/historical-common/proto"
-
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/timakaa/historical-common/proto"
 	"github.com/timakaa/historical-gateway/internal/handlers"
 	"github.com/timakaa/historical-gateway/internal/middleware"
-	"github.com/timakaa/historical-gateway/internal/repositories"
-	"github.com/timakaa/historical-gateway/internal/services"
 )
 
 type Server struct {
@@ -21,30 +18,26 @@ type Server struct {
 
 func NewServer(historicalAddr, accessAddr string) (*Server, error) {
 	// Connect to other services
-	historicalConn, err := grpc.NewClient(historicalAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	pricesConn, err := grpc.NewClient(historicalAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to historical service: %v", err)
 	}
 
-	accessConn, err := grpc.NewClient(accessAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := grpc.NewClient(accessAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to access service: %v", err)
 	}
 
-	// Create repositories
-	historicalRepo := repositories.NewHistoricalRepository(pb.NewHistoricalPricesClient(historicalConn))
-	accessRepo := repositories.NewAccessRepository(pb.NewAccessManagerClient(accessConn))
-
-	// Create services
-	historicalService := services.NewHistoricalService(historicalRepo)
-	authService := services.NewAuthService(accessRepo)
+	pricesClient := proto.NewPricesClient(pricesConn)
+	authClient := proto.NewAuthClient(authConn)
 
 	// Create handlers
-	healthHandler := handlers.NewHealthHandler(historicalService, authService)
-	pricesHandler := handlers.NewPricesHandler(historicalService)
+	healthHandler := handlers.NewHealthHandler(pricesClient, authClient)
+	pricesHandler := handlers.NewPricesHandler(pricesClient)
+	authHandler := handlers.NewAuthHandler(authClient)
 
 	// Create middleware
-	authMiddleware := middleware.NewAuthMiddleware(authService)
+	authMiddleware := middleware.NewAuthMiddleware(authClient)
 
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"127.0.0.1", "::1"})
@@ -54,7 +47,7 @@ func NewServer(historicalAddr, accessAddr string) (*Server, error) {
 	}
 
 	// Setup routes
-	server.setupRoutes(healthHandler, pricesHandler, authMiddleware)
+	server.setupRoutes(healthHandler, pricesHandler, authHandler, authMiddleware)
 
 	return server, nil
 }
@@ -62,16 +55,17 @@ func NewServer(historicalAddr, accessAddr string) (*Server, error) {
 func (s *Server) setupRoutes(
 	healthHandler *handlers.HealthHandler,
 	pricesHandler *handlers.PricesHandler,
+	authHandler *handlers.AuthHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) {
 	// Health check endpoint
-	s.router.GET("/health", healthHandler.Handle)
+	healthHandler.RegisterRoutes(s.router)
 
 	// API endpoints
 	api := s.router.Group("/api/v1")
-	api.Use(authMiddleware.Authenticate())
 	{
-		api.GET("/prices/:exchange/:ticker", pricesHandler.HandleGetHistoricalPrices)
+		pricesHandler.RegisterRoutes(api, authMiddleware.Authenticate())
+		authHandler.RegisterRoutes(api)
 	}
 }
 

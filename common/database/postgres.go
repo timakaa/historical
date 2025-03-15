@@ -18,9 +18,9 @@ func InitDatabase() (*gorm.DB, error) {
 	// Get database connection parameters from environment variables
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "postgres")
-	dbname := getEnv("DB_NAME", "postgres")
+	user := getEnv("DB_USER", "timakaaliebe")
+	password := getEnv("DB_PASSWORD", "test")
+	dbname := getEnv("DB_NAME", "historical")
 	sslmode := getEnv("DB_SSLMODE", "disable")
 
 	// Create DSN (Data Source Name)

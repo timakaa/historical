@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package access;
 
-option go_package = "historical/proto";
+option go_package = "github.com/timakaa/historical-common/proto";
 
-service AccessManager {
+service Auth {
   rpc ValidateToken (ValidateRequest) returns (ValidateResponse) {}
   rpc CreateToken (CreateTokenRequest) returns (CreateTokenResponse) {}
   rpc RevokeToken (RevokeTokenRequest) returns (RevokeTokenResponse) {}
@@ -22,7 +22,6 @@ message ValidateResponse {
 }
 
 message CreateTokenRequest {
-  string user_id = 1;
   repeated string permissions = 2;
   int64 expires_in = 3; // in seconds
 }

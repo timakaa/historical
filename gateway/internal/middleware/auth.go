@@ -4,16 +4,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/timakaa/historical-gateway/internal/services"
+	"github.com/timakaa/historical-common/proto"
 )
 
 type AuthMiddleware struct {
-	authService services.AuthService
+	authClient proto.AuthClient
 }
 
-func NewAuthMiddleware(authService services.AuthService) *AuthMiddleware {
+func NewAuthMiddleware(authClient proto.AuthClient) *AuthMiddleware {
 	return &AuthMiddleware{
-		authService: authService,
+		authClient: authClient,
 	}
 }
 
@@ -26,8 +26,13 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		// Validate token with Auth Service
-		userID, permissions, err := m.authService.ValidateToken(c.Request.Context(), token)
+		// Create gRPC request
+		req := &proto.ValidateRequest{
+			Token: token,
+		}
+
+		// Call gRPC service
+		resp, err := m.authClient.ValidateToken(c.Request.Context(), req)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
@@ -35,8 +40,8 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		}
 
 		// Store user info in context
-		c.Set("userID", userID)
-		c.Set("permissions", permissions)
+		c.Set("userID", resp.UserId)
+		c.Set("permissions", resp.Permissions)
 		c.Next()
 	}
 }

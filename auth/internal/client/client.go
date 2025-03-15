@@ -13,7 +13,7 @@ import (
 
 type Client struct {
 	conn   *grpc.ClientConn
-	client pb.AccessManagerClient
+	client pb.AuthClient
 }
 
 func NewClient(address string) (*Client, error) {
@@ -22,7 +22,7 @@ func NewClient(address string) (*Client, error) {
 		return nil, fmt.Errorf("failed to connect: %v", err)
 	}
 
-	client := pb.NewAccessManagerClient(conn)
+	client := pb.NewAuthClient(conn)
 	return &Client{
 		conn:   conn,
 		client: client,
@@ -44,7 +44,6 @@ func (c *Client) CreateToken(userID string, permissions []string, expiresIn int6
 	defer cancel()
 
 	return c.client.CreateToken(ctx, &pb.CreateTokenRequest{
-		UserId:      userID,
 		Permissions: permissions,
 		ExpiresIn:   expiresIn,
 	})
@@ -61,4 +60,4 @@ func (c *Client) RevokeToken(token string) (*pb.RevokeTokenResponse, error) {
 
 func (c *Client) Close() error {
 	return c.conn.Close()
-} 
+}

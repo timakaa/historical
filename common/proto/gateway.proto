@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package gateway;
 
-option go_package = "historical/proto";
+option go_package = "github.com/timakaa/historical-common/proto";
 
 import "common/proto/prices.proto";
 
 service Gateway {
-  rpc GetHistoricalPrices (prices.HistoricalPricesRequest) returns (stream prices.HistoricalPricesResponse) {}
+  rpc GetPrices (prices.PricesRequest) returns (stream prices.PricesResponse) {}
   
   // Health check
   rpc Health (HealthRequest) returns (HealthResponse) {}
