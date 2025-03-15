@@ -8,6 +8,8 @@ service Auth {
   rpc ValidateToken (ValidateRequest) returns (ValidateResponse) {}
   rpc CreateToken (CreateTokenRequest) returns (CreateTokenResponse) {}
   rpc RevokeToken (RevokeTokenRequest) returns (RevokeTokenResponse) {}
+  rpc UpdateTokenCandlesLeft (UpdateTokenCandlesLeftRequest) returns (UpdateTokenCandlesLeftResponse) {}
+  rpc GetTokenInfo (GetTokenInfoRequest) returns (GetTokenInfoResponse) {}
 }
 
 message ValidateRequest {
@@ -37,4 +39,24 @@ message RevokeTokenRequest {
 
 message RevokeTokenResponse {
   bool success = 1;
+}
+
+message UpdateTokenCandlesLeftRequest {
+  int64 decrease_candles = 1;
+  string token = 2;
+}
+
+message UpdateTokenCandlesLeftResponse {
+  int64 candles_left = 1;
+}
+
+message GetTokenInfoRequest {
+  string token = 1;
+}
+
+message GetTokenInfoResponse {
+  string token = 1;
+  int64 candles_left = 2;
+  int64 expires_at = 3;
+  repeated string permissions = 4;
 }

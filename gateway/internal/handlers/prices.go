@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/timakaa/historical-common/proto"
@@ -10,17 +11,54 @@ import (
 
 type PricesHandler struct {
 	pricesClient proto.PricesClient
+	authClient   proto.AuthClient
 }
 
-func NewPricesHandler(pricesClient proto.PricesClient) *PricesHandler {
+func NewPricesHandler(pricesClient proto.PricesClient, authClient proto.AuthClient) *PricesHandler {
 	return &PricesHandler{
 		pricesClient: pricesClient,
+		authClient:   authClient,
 	}
 }
 
 func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 	exchange := c.Param("exchange")
 	ticker := c.Param("ticker")
+	token := c.GetHeader("x-api-key")
+	limitStr := c.Query("limit")
+
+	var limit int64
+	if limitStr != "" {
+		parsedLimit, err := strconv.ParseInt(limitStr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit parameter"})
+			return
+		}
+		limit = parsedLimit
+	}
+
+	// Если токен указан, проверяем количество оставшихся свечей
+	if token != "" {
+		// Получаем информацию о токене
+		tokenInfoReq := &proto.GetTokenInfoRequest{
+			Token: token,
+		}
+
+		tokenInfo, err := h.authClient.GetTokenInfo(c.Request.Context(), tokenInfoReq)
+		if err != nil {
+			log.Printf("Error getting token info: %v", err)
+			// Можно продолжить выполнение или вернуть ошибку, в зависимости от требований
+		} else {
+			// Проверяем, достаточно ли оставшихся свечей
+			log.Printf("Token %s has %d candles left", token, tokenInfo.CandlesLeft)
+
+			// Если у токена недостаточно свечей, возвращаем ошибку
+			if tokenInfo.CandlesLeft <= 0 || tokenInfo.CandlesLeft < limit {
+				c.JSON(http.StatusForbidden, gin.H{"error": "no candles left in your token"})
+				return
+			}
+		}
+	}
 
 	// Create gRPC request
 	req := &proto.PricesRequest{
@@ -64,6 +102,19 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 			Close:  resp.Close,
 			Volume: resp.Volume,
 		})
+	}
+
+	// После получения всех цен, уменьшаем количество оставшихся свечей
+	if token != "" {
+		updateReq := &proto.UpdateTokenCandlesLeftRequest{
+			Token:           token,
+			DecreaseCandles: int64(len(prices)),
+		}
+
+		_, err := h.authClient.UpdateTokenCandlesLeft(c.Request.Context(), updateReq)
+		if err != nil {
+			log.Printf("Error updating candles left: %v", err)
+		}
 	}
 
 	// Return all prices as JSON array

@@ -18,9 +18,9 @@ run:
 			;; \
 		"all") \
 			echo "Starting all services..." && \
+			(cd gateway && go run cmd/main.go) \
 			(cd prices && go run cmd/main.go) & \
 			(cd auth && go run cmd/main.go) & \
-			(cd gateway && go run cmd/main.go) \
 			;; \
 		*) \
 			echo "Unknown service: $(SERVICE). Available options: prices, auth, gateway, all" && \
@@ -31,9 +31,9 @@ run:
 # Запуск всех сервисов (альтернативный способ)
 run-all:
 	@echo "Starting all services..."
+	(cd gateway && go run cmd/main.go) & \
 	@(cd prices && go run cmd/main.go) & \
-	(cd auth && go run cmd/main.go) & \
-	(cd gateway && go run cmd/main.go)
+	(cd auth && go run cmd/main.go)
 
 # Сборка сервисов
 build:
@@ -117,6 +117,8 @@ stop:
 	@-pkill -f "bin/prices" 2>/dev/null || true
 	@-pkill -f "bin/auth" 2>/dev/null || true
 	@-pkill -f "bin/gateway" 2>/dev/null || true
+	@-pkill -f "air" 2>/dev/null || true
+	@-lsof -ti :50050,50051,50052 | xargs kill -9 2>/dev/null || true
 	@echo "All services stopped."
 
 # Очистка бинарных файлов
@@ -165,9 +167,12 @@ dev:
 			;; \
 		"all") \
 			echo "Starting all services with Air..." && \
-			(cd prices && air) & \
-			(cd auth && air) & \
-			(cd gateway && air) \
+			( trap 'kill 0' SIGINT SIGTERM EXIT; \
+			  (cd prices && air) & \
+			  (cd auth && air) & \
+			  (cd gateway && air) & \
+			  wait \
+			) \
 			;; \
 		*) \
 			echo "Unknown service: $(SERVICE). Available options: prices, auth, gateway, all" && \
@@ -178,8 +183,11 @@ dev:
 # Запуск всех сервисов с Air (альтернативный способ)
 dev-all:
 	@echo "Starting all services with Air..."
-	@(cd prices && air) & \
-	(cd auth && air) & \
-	(cd gateway && air)
+	@( trap 'kill 0' SIGINT SIGTERM EXIT; \
+	   (cd prices && air) & \
+	   (cd auth && air) & \
+	   (cd gateway && air) & \
+	   wait \
+	)
 
 .PHONY: run run-all build build-all start start-all gen stop clean help dev dev-all

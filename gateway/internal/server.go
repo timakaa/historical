@@ -33,7 +33,7 @@ func NewServer(historicalAddr, accessAddr string) (*Server, error) {
 
 	// Create handlers
 	healthHandler := handlers.NewHealthHandler(pricesClient, authClient)
-	pricesHandler := handlers.NewPricesHandler(pricesClient)
+	pricesHandler := handlers.NewPricesHandler(pricesClient, authClient)
 	authHandler := handlers.NewAuthHandler(authClient)
 
 	// Create middleware
