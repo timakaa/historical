@@ -19,7 +19,7 @@ func NewAuthMiddleware(authClient proto.AuthClient) *AuthMiddleware {
 
 func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
+		token := c.GetHeader("x-api-key")
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "missing authorization header"})
 			c.Abort()

@@ -14,7 +14,7 @@ type Server struct {
 	pb.UnimplementedPricesServer
 }
 
-func (s *Server) GetHistoricalPrices(req *pb.PricesRequest, stream pb.Prices_GetPricesServer) error {
+func (s *Server) GetPrices(req *pb.PricesRequest, stream pb.Prices_GetPricesServer) error {
 	log.Printf("Received request for ticker: %s from exchange: %s", req.GetTicker(), req.GetExchange())
 
 	// TODO: Create a real business logic
