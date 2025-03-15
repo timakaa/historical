@@ -37,29 +37,6 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 		limit = parsedLimit
 	}
 
-	// If token is provided, check the number of remaining candles
-	if token != "" {
-		// Get token information
-		tokenInfoReq := &proto.GetTokenInfoRequest{
-			Token: token,
-		}
-
-		tokenInfo, err := h.authClient.GetTokenInfo(c.Request.Context(), tokenInfoReq)
-		if err != nil {
-			log.Printf("Error getting token info: %v", err)
-			// Can continue execution or return an error, depending on requirements
-		} else {
-			// Check if there are enough candles left
-			log.Printf("Token %s has %d candles left", token, tokenInfo.CandlesLeft)
-
-			// If the token doesn't have enough candles, return an error
-			if tokenInfo.CandlesLeft <= 0 || tokenInfo.CandlesLeft < limit {
-				c.JSON(http.StatusForbidden, gin.H{"error": "no candles left in your token"})
-				return
-			}
-		}
-	}
-
 	// Create gRPC request
 	req := &proto.PricesRequest{
 		Exchange: exchange,

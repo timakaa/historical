@@ -181,9 +181,13 @@ func (s *Server) UpdateTokenCandlesLeft(ctx context.Context, req *pb.UpdateToken
 		currentCandlesLeft = 0
 	}
 
-	newCandlesLeft := currentCandlesLeft - req.DecreaseCandles
-	if newCandlesLeft < 0 {
-		newCandlesLeft = 0
+	newCandlesLeft := max(0, currentCandlesLeft-req.DecreaseCandles)
+
+	if newCandlesLeft <= 0 {
+		s.db.Delete(&token)
+		return &pb.UpdateTokenCandlesLeftResponse{
+			CandlesLeft: newCandlesLeft,
+		}, nil
 	}
 
 	// Update the value in the database

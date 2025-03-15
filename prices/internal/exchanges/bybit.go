@@ -53,7 +53,7 @@ func (a *BybitAdapter) GetHistoricalPrices(ctx context.Context, ticker string, l
 
 	// Check if request was successful
 	if resp.RetCode != 0 {
-		return nil, fmt.Errorf("Bybit API error: %s", resp.RetMsg)
+		return nil, fmt.Errorf("bybit API error: %s", resp.RetMsg)
 	}
 
 	// Convert data to response format
