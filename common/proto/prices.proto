@@ -11,6 +11,7 @@ service Prices {
 message PricesRequest {
   string ticker = 1;
   string exchange = 2;
+  int64 limit = 3;
 }
 
 message PricesResponse {

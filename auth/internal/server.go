@@ -186,7 +186,7 @@ func (s *Server) UpdateTokenCandlesLeft(ctx context.Context, req *pb.UpdateToken
 		newCandlesLeft = 0
 	}
 
-	// Обновляем значение в базе данных
+	// Update the value in the database
 	result = s.db.Model(&token).Update("candles_left", newCandlesLeft)
 	if result.Error != nil {
 		log.Printf("Error updating candles_left: %v", result.Error)
@@ -223,7 +223,7 @@ func (s *Server) GetTokenInfo(ctx context.Context, req *pb.GetTokenInfoRequest) 
 		return nil, status.Error(codes.Internal, "failed to find token")
 	}
 
-	// Получаем значение candles_left
+	// Get the candles_left value
 	var candlesLeft int64
 	err := s.db.Model(&token).Select("candles_left").Scan(&candlesLeft).Error
 	if err != nil {

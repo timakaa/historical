@@ -27,7 +27,7 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 	token := c.GetHeader("x-api-key")
 	limitStr := c.Query("limit")
 
-	var limit int64
+	var limit int64 = 100
 	if limitStr != "" {
 		parsedLimit, err := strconv.ParseInt(limitStr, 10, 64)
 		if err != nil {
@@ -37,9 +37,9 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 		limit = parsedLimit
 	}
 
-	// Если токен указан, проверяем количество оставшихся свечей
+	// If token is provided, check the number of remaining candles
 	if token != "" {
-		// Получаем информацию о токене
+		// Get token information
 		tokenInfoReq := &proto.GetTokenInfoRequest{
 			Token: token,
 		}
@@ -47,12 +47,12 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 		tokenInfo, err := h.authClient.GetTokenInfo(c.Request.Context(), tokenInfoReq)
 		if err != nil {
 			log.Printf("Error getting token info: %v", err)
-			// Можно продолжить выполнение или вернуть ошибку, в зависимости от требований
+			// Can continue execution or return an error, depending on requirements
 		} else {
-			// Проверяем, достаточно ли оставшихся свечей
+			// Check if there are enough candles left
 			log.Printf("Token %s has %d candles left", token, tokenInfo.CandlesLeft)
 
-			// Если у токена недостаточно свечей, возвращаем ошибку
+			// If the token doesn't have enough candles, return an error
 			if tokenInfo.CandlesLeft <= 0 || tokenInfo.CandlesLeft < limit {
 				c.JSON(http.StatusForbidden, gin.H{"error": "no candles left in your token"})
 				return
@@ -64,6 +64,7 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 	req := &proto.PricesRequest{
 		Exchange: exchange,
 		Ticker:   ticker,
+		Limit:    limit,
 	}
 
 	// Call gRPC service
@@ -104,7 +105,7 @@ func (h *PricesHandler) HandleGetHistoricalPrices(c *gin.Context) {
 		})
 	}
 
-	// После получения всех цен, уменьшаем количество оставшихся свечей
+	// After receiving all prices, decrease the number of remaining candles
 	if token != "" {
 		updateReq := &proto.UpdateTokenCandlesLeftRequest{
 			Token:           token,
