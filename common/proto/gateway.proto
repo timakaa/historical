@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package gateway;
+
+option go_package = "historical/proto";
+
+import "common/proto/prices.proto";
+
+service Gateway {
+  rpc GetHistoricalPrices (prices.HistoricalPricesRequest) returns (stream prices.HistoricalPricesResponse) {}
+  
+  // Health check
+  rpc Health (HealthRequest) returns (HealthResponse) {}
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  map<string, ServiceStatus> services = 1;
+}
+
+message ServiceStatus {
+  enum Status {
+    UNKNOWN = 0;
+    UP = 1;
+    DOWN = 2;
+    DEGRADED = 3;
+  }
+  Status status = 1;
+  string message = 2;
+} 

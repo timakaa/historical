@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package access;
+
+option go_package = "historical/proto";
+
+service AccessManager {
+  rpc ValidateToken (ValidateRequest) returns (ValidateResponse) {}
+  rpc CreateToken (CreateTokenRequest) returns (CreateTokenResponse) {}
+  rpc RevokeToken (RevokeTokenRequest) returns (RevokeTokenResponse) {}
+}
+
+message ValidateRequest {
+  string token = 1;
+  string service = 2;
+}
+
+message ValidateResponse {
+  bool is_valid = 1;
+  string user_id = 2;
+  repeated string permissions = 3;
+}
+
+message CreateTokenRequest {
+  string user_id = 1;
+  repeated string permissions = 2;
+  int64 expires_in = 3; // in seconds
+}
+
+message CreateTokenResponse {
+  string token = 1;
+  int64 expires_at = 2;
+}
+
+message RevokeTokenRequest {
+  string token = 1;
+}
+
+message RevokeTokenResponse {
+  bool success = 1;
+}

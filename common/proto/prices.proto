@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package prices;
+
+option go_package = "historical/proto";
+
+service HistoricalPrices {
+  rpc GetHistoricalPrices (HistoricalPricesRequest) returns (stream HistoricalPricesResponse) {}
+}
+
+message HistoricalPricesRequest {
+  string ticker = 1;
+  string exchange = 2;
+}
+
+message HistoricalPricesResponse {
+  string Date = 1;
+  double Open = 2;
+  double High = 3;
+  double Low = 4;
+  double Close = 5;
+  double Volume = 6;
+}
