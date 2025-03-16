@@ -100,11 +100,6 @@ func (s *Server) CreateToken(ctx context.Context, req *pb.CreateTokenRequest) (*
 		return nil, status.Error(codes.Internal, "failed to create token")
 	}
 
-	if result.RowsAffected == 0 {
-		log.Printf("No rows affected when creating token")
-		return nil, status.Error(codes.Internal, "failed to create token")
-	}
-
 	log.Printf("Token created successfully: %s", token.TokenString)
 
 	// Return response
@@ -204,6 +199,7 @@ func (s *Server) UpdateTokenCandlesLeft(ctx context.Context, req *pb.UpdateToken
 	}, nil
 }
 
+// GetTokenInfo retrieves information about a token
 func (s *Server) GetTokenInfo(ctx context.Context, req *pb.GetTokenInfoRequest) (*pb.GetTokenInfoResponse, error) {
 	if req.Token == "" {
 		return nil, status.Error(codes.InvalidArgument, "token is required")
@@ -244,8 +240,8 @@ func (s *Server) GetTokenInfo(ctx context.Context, req *pb.GetTokenInfoRequest) 
 }
 
 func Start(port int) error {
-	// Get database connection
-	db := database.GetDB()
+	// Get database connection using the provider
+	db := database.Provider.GetDB()
 	if db == nil {
 		return fmt.Errorf("failed to get database connection")
 	}

@@ -66,7 +66,7 @@ func InitDatabase() (*gorm.DB, error) {
 
 // GetDB returns the database connection
 func GetDB() *gorm.DB {
-	return DB
+	return Provider.GetDB()
 }
 
 // CloseDatabase closes the database connection
