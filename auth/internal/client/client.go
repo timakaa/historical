@@ -11,13 +11,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// For testing purposes
+var grpcNewClient = grpc.NewClient
+
 type Client struct {
 	conn   *grpc.ClientConn
 	client pb.AuthClient
 }
 
 func NewClient(address string) (*Client, error) {
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpcNewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %v", err)
 	}
